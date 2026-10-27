@@ -29,7 +29,9 @@ RUN rm -f /usr/local/bin/cmake || true
 COPY docker_requirements.txt /workspace/docker_requirements.txt
 COPY setup.py /workspace/setup.py
 COPY pyproject.toml /workspace/pyproject.toml
+COPY README.md /workspace/README.md
 COPY kimodo /workspace/kimodo
+COPY general_motion_retargeting /workspace/general_motion_retargeting
 COPY kimodo-viser /workspace/kimodo-viser
 COPY MotionCorrection /workspace/MotionCorrection
 

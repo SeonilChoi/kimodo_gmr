@@ -94,11 +94,17 @@ class CMakeBuild(build_ext):
                     )
 
 
-kimodo_packages = find_packages(include=["kimodo", "kimodo.*"])
+kimodo_packages = find_packages(include=["kimodo", "kimodo.*", "general_motion_retargeting", "general_motion_retargeting.*"])
 
 # When set (e.g. in Docker), do not bundle motion_correction here; it is installed
 # separately (e.g. from docker_requirements.txt as ./MotionCorrection) non-editable.
 skip_motion_correction = os.environ.get("SKIP_MOTION_CORRECTION_IN_SETUP", "").strip().lower() in ("1", "true", "yes")
+
+motion_correction_dir = Path(__file__).parent / "MotionCorrection" / "python" / "motion_correction"
+# Reuse an already-built extension (e.g. a .pyd built once on Windows) instead of requiring CMake again.
+has_prebuilt_extension = any(motion_correction_dir.glob("_motion_correction*.pyd")) or any(
+    motion_correction_dir.glob("_motion_correction*.so")
+)
 
 if skip_motion_correction:
     packages = kimodo_packages
@@ -108,8 +114,12 @@ if skip_motion_correction:
 else:
     packages = kimodo_packages + ["motion_correction"]
     package_dir = {"motion_correction": "MotionCorrection/python/motion_correction"}
-    ext_modules = [CMakeExtension("motion_correction._motion_correction", "MotionCorrection")]
-    cmdclass = {"build_ext": CMakeBuild}
+    if has_prebuilt_extension:
+        ext_modules = []
+        cmdclass = {}
+    else:
+        ext_modules = [CMakeExtension("motion_correction._motion_correction", "MotionCorrection")]
+        cmdclass = {"build_ext": CMakeBuild}
 
 setup(
     packages=packages,
