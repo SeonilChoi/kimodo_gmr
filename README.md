@@ -48,7 +48,26 @@ kimodo_gen "A person stands still." --duration 6 --output motion_data\stand
 Writes `motion_data\stand.npz` and `motion_data\stand_amass.npz`. The `_amass.npz` file is the GMR input.
 The model defaults to `Kimodo-SMPLX-RP-v1`.
 
-Tip: run `kimodo_textencoder` in a separate terminal to keep the text encoder loaded between `kimodo_gen` runs.
+#### Text encoder server (recommended)
+
+By default `kimodo_gen` loads the 8B text encoder (LLM2Vec, Llama-3-8B) on every run, which takes several minutes.
+Keep it loaded in a separate terminal instead:
+
+```bash
+# terminal 1: start once and leave it running (ready when port 9550 is listening)
+conda activate env_kimodo
+cd C:\kimodo
+kimodo_textencoder
+
+# terminal 2: kimodo_gen / kimodo_demo connect to it automatically
+kimodo_gen "A person stands still." --duration 6 --output motion_data\stand
+```
+
+- `kimodo_gen` first tries `http://127.0.0.1:9550/`. If no server is running it prints
+  `Text encoder service is unreachable, falling back to local LLM2Vec encoder` and loads the encoder itself.
+- Force a mode with `set TEXT_ENCODER_MODE=api` (server only) or `set TEXT_ENCODER_MODE=local` (never use the server).
+- The server listens on port 9550 (change with `set GRADIO_SERVER_PORT=...`, and point clients at it with
+  `set TEXT_ENCODER_URL=http://127.0.0.1:<port>/`).
 
 ### 1-1. (Optional) View the motion on the SMPL-X body (kimodo_demo)
 

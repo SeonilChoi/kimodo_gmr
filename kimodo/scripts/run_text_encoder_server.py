@@ -3,6 +3,7 @@
 
 import argparse
 import os
+import tempfile
 
 import gradio as gr
 import numpy as np
@@ -15,7 +16,8 @@ os.environ["HF_ENABLE_PARALLEL_LOADING"] = "YES"
 DEFAULT_TEXT = "A person walks and falls to the ground."
 DEFAULT_SERVER_NAME = "0.0.0.0"
 DEFAULT_SERVER_PORT = 9550
-DEFAULT_TMP_FOLDER = "/tmp/text_encoder/"
+# OS temp dir (e.g. /tmp on Linux, %TEMP% on Windows) so Gradio is allowed to serve the embeddings.
+DEFAULT_TMP_FOLDER = os.path.join(tempfile.gettempdir(), "text_encoder")
 DEFAULT_TEXT_ENCODER = "llm2vec"
 TEXT_ENCODER_PRESETS = {
     "llm2vec": {
@@ -163,7 +165,12 @@ def main():
         )
         clear.click(fn=clear_fn, inputs=None, outputs=outputs)
 
-    demo.launch(server_name=server_name, server_port=server_port)
+    demo.launch(
+        server_name=server_name,
+        server_port=server_port,
+        allowed_paths=[os.path.abspath(args.tmp_folder)],
+        show_error=True,
+    )
 
 
 if __name__ == "__main__":
