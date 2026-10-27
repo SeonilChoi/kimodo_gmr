@@ -1,11 +1,10 @@
-from general_motion_retargeting import RobotMotionViewer, load_robot_motion
+from general_motion_retargeting import RobotMotionViewer, load_robot_motion, ROBOT_XML_DICT
 import argparse
 import os
-from tqdm import tqdm
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--robot", type=str, default="unitree_g1")
+    parser.add_argument("--robot", type=str, choices=list(ROBOT_XML_DICT.keys()), default="bdx")
                         
     parser.add_argument("--robot_motion_path", type=str, required=True)
 

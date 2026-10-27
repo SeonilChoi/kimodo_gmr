@@ -3,18 +3,17 @@
 
 import argparse
 import os
-import shutil
 from typing import Any, Dict, Optional
 
 import torch
 
-from kimodo import DEFAULT_MODEL, load_model
+from kimodo import load_model
 from kimodo.constraints import load_constraints_lst
 from kimodo.exports.motion_io import save_kimodo_npz
 from kimodo.meta import load_prompts_from_meta
 from kimodo.model.cfg import CFG_TYPES
 from kimodo.model.registry import get_model_info
-from kimodo.tools import load_json, save_json, seed_everything
+from kimodo.tools import load_json, seed_everything
 
 
 def parse_args():
@@ -29,8 +28,8 @@ def parse_args():
     parser.add_argument(
         "--model",
         type=str,
-        default=DEFAULT_MODEL,
-        help="Name of the model (e.g. Kimodo-SOMA-RP-v1, etc).",
+        default="Kimodo-SMPLX-RP-v1",
+        help="Name of the model (default: Kimodo-SMPLX-RP-v1, whose *_amass.npz output feeds GMR).",
     )
     parser.add_argument(
         "--duration",
@@ -66,26 +65,7 @@ def parse_args():
         "--output",
         type=str,
         default="output",
-        help="Output stem name: with one sample writes a single file per format (e.g. test.npz, test.csv); with multiple samples creates a folder and writes test_00.npz, test_01.npz, ... inside it. Used for NPZ, AMASS NPZ, CSV, and BVH.",
-    )
-    parser.add_argument(
-        "--save_example_dir",
-        action="store_true",
-        help=(
-            "Save demo-compatible example directories (each contains motion.npz, constraints.json, meta.json). "
-            "With one sample, writes <output>_example/. With multiple samples, writes "
-            "<output>_examples/<output>_example_00/, <output>_example_01/, ..."
-        ),
-    )
-    parser.add_argument(
-        "--bvh",
-        action="store_true",
-        help="Also export BVH (SOMA models only); uses the same stem as --output.",
-    )
-    parser.add_argument(
-        "--bvh_standard_tpose",
-        action="store_true",
-        help="If exporting BVH, export with the rest pose being the standard T-pose rather than the rest pose consistent with the BONES-SEED dataset.",
+        help="Output stem name: with one sample writes a single file per format (e.g. test.npz, test_amass.npz); with multiple samples creates a folder and writes test_00.npz, test_01.npz, ... inside it. Used for NPZ and AMASS NPZ.",
     )
     parser.add_argument(
         "--no-postprocess",
@@ -338,7 +318,7 @@ def main():
     )
 
     n_samples = int(output["posed_joints"].shape[0])
-    # Parse the output stem once; all formats (NPZ, AMASS NPZ, CSV, BVH) use this base name.
+    # Parse the output stem once; all formats (NPZ, AMASS NPZ) use this base name.
     output_base = args.output
 
     # Save the NPZ output
@@ -374,128 +354,6 @@ def main():
             out_dir, _, base_name = _output_dir_and_path(output_base, "amass", ".npz")
             print(f"Saving the amass output to {out_dir}/ (amass_00.npz ...)")
             converter.convert_save_npz(output, os.path.join(out_dir, "amass.npz"))
-
-    # Save the CSV output
-    if resolved_model == "kimodo-g1-rp":
-        from kimodo.exports.mujoco import MujocoQposConverter
-
-        converter = MujocoQposConverter(model.skeleton)
-        qpos = converter.dict_to_qpos(output, device)
-        if n_samples == 1:
-            csv_path = _single_file_path(output_base, ".csv")
-            print(f"Saving the csv output to {csv_path}")
-            converter.save_csv(qpos, csv_path)
-        else:
-            out_dir, _, base_name = _output_dir_and_path(output_base, "qpos", ".csv")
-            print(f"Saving the csv output to {out_dir}/ ({base_name}_00.csv ...)")
-            converter.save_csv(qpos, os.path.join(out_dir, base_name + ".csv"))
-
-    # Save the BVH output
-    if args.bvh:
-        skeleton = model.skeleton
-        if "somaskel" not in skeleton.name:
-            print("BVH export is only supported for SOMA skeletons. Skipping --bvh.")
-        else:
-            from kimodo.exports.bvh import save_motion_bvh
-            from kimodo.skeleton import SOMASkeleton30, global_rots_to_local_rots
-
-            if isinstance(skeleton, SOMASkeleton30):
-                # Motion has already been converted to somaskel77 within the model for output
-                skeleton = skeleton.somaskel77.to(device)
-
-            if n_samples == 1:
-                bvh_path = _single_file_path(output_base, ".bvh")
-                print(f"Saving the BVH output to {bvh_path}")
-                joints_pos = torch.from_numpy(output["posed_joints"][0]).to(device)
-                joints_rot = torch.from_numpy(output["global_rot_mats"][0]).to(device)
-                local_rot_mats = global_rots_to_local_rots(joints_rot, skeleton)
-                root_positions = joints_pos[:, skeleton.root_idx, :]
-                save_motion_bvh(
-                    bvh_path,
-                    local_rot_mats,
-                    root_positions,
-                    skeleton=skeleton,
-                    fps=model.fps,
-                    standard_tpose=args.bvh_standard_tpose,
-                )
-            else:
-                out_dir, _, base_name = _output_dir_and_path(output_base, "motion", ".bvh")
-                print(f"Saving the BVH output to {out_dir}/ ({base_name}_00.bvh ...)")
-                for i in range(n_samples):
-                    joints_pos = torch.from_numpy(output["posed_joints"][i]).to(device)
-                    joints_rot = torch.from_numpy(output["global_rot_mats"][i]).to(device)
-                    local_rot_mats = global_rots_to_local_rots(joints_rot, skeleton)
-                    root_positions = joints_pos[:, skeleton.root_idx, :]
-                    save_motion_bvh(
-                        os.path.join(out_dir, f"{base_name}_{i:02d}.bvh"),
-                        local_rot_mats,
-                        root_positions,
-                        skeleton=skeleton,
-                        fps=model.fps,
-                        standard_tpose=args.bvh_standard_tpose,
-                    )
-
-    # Save the example directory
-    if args.save_example_dir:
-        output_stem = os.path.splitext(output_base)[0].rstrip(os.sep)
-        base_name = os.path.basename(output_stem)
-
-        if n_samples == 1:
-            parent_dir = None
-            example_dirs = [output_stem + "_example"]
-        else:
-            parent_dir = output_stem + "_examples"
-            if os.path.exists(parent_dir):
-                raise FileExistsError(f"Example directory already exists: {parent_dir}")
-            os.makedirs(parent_dir)
-            example_dirs = [
-                os.path.join(parent_dir, f"{base_name}_example_{i:02d}") for i in range(n_samples)
-            ]
-
-        durations_sec = [nf / model.fps for nf in num_frames]
-        if len(texts) == 1:
-            meta_info: dict = {"text": texts[0], "duration": durations_sec[0]}
-        else:
-            meta_info = {"texts": texts, "durations": durations_sec}
-        meta_info["num_samples"] = generation_inputs["num_samples"]
-        if generation_inputs["seed"] is not None:
-            meta_info["seed"] = generation_inputs["seed"]
-        meta_info["diffusion_steps"] = generation_inputs["diffusion_steps"]
-        if cfg_kwargs:
-            cfg_type = cfg_kwargs.get("cfg_type", "nocfg")
-            cfg_weight = cfg_kwargs.get("cfg_weight")
-            if cfg_type == "nocfg":
-                meta_info["cfg"] = {"enabled": False}
-            elif cfg_type == "separated" and isinstance(cfg_weight, list) and len(cfg_weight) == 2:
-                meta_info["cfg"] = {
-                    "enabled": True,
-                    "text_weight": cfg_weight[0],
-                    "constraint_weight": cfg_weight[1],
-                }
-            elif cfg_type == "regular" and cfg_weight is not None:
-                meta_info["cfg"] = {
-                    "enabled": True,
-                    "text_weight": float(cfg_weight),
-                    "constraint_weight": float(cfg_weight),
-                }
-
-        for i, example_dir in enumerate(example_dirs):
-            if os.path.exists(example_dir):
-                raise FileExistsError(f"Example directory already exists: {example_dir}")
-            os.makedirs(example_dir)
-            sample = {
-                k: (v[i] if hasattr(v, "shape") and len(v.shape) > 0 and v.shape[0] == n_samples else v)
-                for k, v in output.items()
-            }
-            save_kimodo_npz(os.path.join(example_dir, "motion.npz"), sample)
-            if constraints_path:
-                shutil.copy2(constraints_path, os.path.join(example_dir, "constraints.json"))
-            save_json(os.path.join(example_dir, "meta.json"), meta_info)
-
-        if parent_dir is None:
-            print(f"Saved demo example to {example_dirs[0]}")
-        else:
-            print(f"Saved {n_samples} demo examples to {parent_dir}/")
 
 
 if __name__ == "__main__":
