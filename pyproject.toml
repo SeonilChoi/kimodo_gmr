@@ -45,6 +45,7 @@ dependencies = [
 kimodo_gen = "kimodo.scripts.generate:main"
 kimodo_demo = "kimodo.demo:main"
 kimodo_textencoder = "kimodo.scripts.run_text_encoder_server:main"
+urdf_to_gmr = "urdf_to_gmr.__main__:main"
 
 [tool.setuptools]
 include-package-data = true
@@ -59,4 +60,4 @@ extend-select = ["I001"]  # Enable import sorting
 line-length = 120
 
 [tool.ruff.lint.isort]
-known-first-party = ["kimodo", "general_motion_retargeting"]
+known-first-party = ["kimodo", "general_motion_retargeting", "urdf_to_gmr"]

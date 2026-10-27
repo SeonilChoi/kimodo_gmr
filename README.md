@@ -17,8 +17,10 @@ general_motion_retargeting/  GMR package
 scripts/
   smplx_to_robot.py          Retarget SMPL-X motion to a robot (.pkl)
   vis_robot_motion.py        Play a retargeted robot motion
+urdf_to_gmr/                 URDF → GMR-ready MuJoCo XML generator (for adding new robots)
 assets/
   unitree_g1/, bdx/          Robot MuJoCo models
+  arti_d1/                   ARTI-D1 URDF + meshes (no MuJoCo XML / IK config yet)
   body_models/smplx/         SMPL-X body models (not tracked, download separately)
 motion_data/, outputs/       Generated data (not tracked)
 licenses/                    Kimodo (Apache-2.0) and GMR (MIT) licenses
@@ -105,7 +107,51 @@ python scripts\vis_robot_motion.py --robot unitree_g1 --robot_motion_path output
 
 ## Adding a robot
 
-1. Put the MuJoCo model under `assets/<robot>/`.
-2. Add an SMPL-X IK config at `general_motion_retargeting/ik_configs/smplx_to_<robot>.json`
-   (the configs on `main` are good templates).
-3. Register the robot in every dict in `general_motion_retargeting/params.py`.
+### 1. URDF → MuJoCo XML (`urdf_to_gmr`)
+
+`urdf_to_gmr` builds the MuJoCo XML GMR needs (like `assets/unitree_g1/g1_mocap_29dof.xml`) from a robot URDF.
+Lay the robot out like the existing ones:
+
+```
+assets/<robot>/
+  urdf/<robot>.urdf          mesh paths relative to the URDF, e.g. ../meshes/pelvis.stl
+  meshes/*.stl
+```
+
+```bash
+urdf_to_gmr assets\<robot>\urdf\<robot>.urdf
+# -> assets\<robot>\<robot>.xml
+```
+
+What it does:
+- Compiles the URDF with MuJoCo's own importer, so links, joint axes/limits, inertias and meshes match the URDF exactly.
+- Adds a free joint to the URDF root link (the GMR base body) and lifts it so the robot stands on z = 0 at qpos = 0.
+- Keeps fixed URDF links as bodies so they can be IK targets, and adds one motor per joint, a floor, lights and a
+  `home` keyframe.
+- Writes mesh paths relative to the output file and loads the result once to check the layout GMR expects.
+
+Options:
+
+| Option | Meaning |
+| --- | --- |
+| `-o PATH` | Output file (default `assets/<robot>/<robot name>.xml`) |
+| `--frame NAME:PARENT[:x,y,z]` | Add an IK target body (e.g. a toe) under `PARENT` (repeatable) |
+| `--root-height Z` | Fix the root height instead of placing the lowest point on the floor |
+| `--package-dir DIR` | Resolve `package://` mesh URIs (repeatable) |
+| `--name NAME` | MuJoCo model name (default: URDF robot name) |
+| `--no-collision` / `--no-scene` | Drop collision geoms / floor, light and keyframe |
+
+Example (BDX with the toe/heel frames used by `assets/bdx/bdx.xml`):
+
+```bash
+urdf_to_gmr assets\bdx\urdf\bdx.urdf -o assets\bdx\bdx_generated.xml ^
+  --frame left_toe:left_foot_link:0.112,0,-0.0785 --frame right_toe:right_foot_link:0.112,0,-0.0785
+```
+
+It also works from Python: `from urdf_to_gmr import convert_urdf, Frame`.
+
+### 2. IK config and registration
+
+1. Write `general_motion_retargeting/ik_configs/smplx_to_<robot>.json` using the body names `urdf_to_gmr` prints
+   (`smplx_to_g1.json` / `smplx_to_bdx.json` are good templates; `main` has many more).
+2. Register the robot in every dict in `general_motion_retargeting/params.py` (`urdf_to_gmr` prints the entries).
