@@ -1,0 +1,280 @@
+<mujoco model="bdx">
+  <!--
+    BDX bipedal droid - MuJoCo model.
+
+    Generated from assets/bdx/urdf/bdx.urdf. The kinematic tree, joint origins,
+    joint axes, joint limits, link inertias and visual meshes are numerically
+    identical to the URDF; everything else below (scene, collision geoms,
+    contact/retarget frames, actuator limits, keyframe, sensors) completes the
+    model.
+
+    SMPL-X retargeting (general_motion_retargeting/ik_configs/smplx_to_bdx.json)
+    drives the bodies tagged "<- smplx:<joint>" below. Every tagged body is
+    axis-aligned with the robot convention (x forward, y left, z up) in the rest
+    pose, so the single canonical quaternion (-0.5 0.5 0.5 0.5) rotates the
+    SMPL-X template frame (x left, y up, z forward) onto all of them, and the
+    per-body position offsets in the IK config make the rest pose an exact
+    zero-error solution of the IK problem.
+  -->
+
+  <compiler angle="radian" meshdir="mesh" autolimits="true"/>
+
+  <option timestep="0.002" integrator="implicitfast" cone="elliptic" impratio="10"/>
+
+  <default>
+    <default class="bdx">
+      <joint type="hinge" damping="0.01" armature="0.001"/>
+      <motor ctrllimited="true"/>
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2" density="0" material="silver"/>
+      </default>
+      <default class="collision">
+        <geom type="mesh" contype="1" conaffinity="0" group="3" density="0"
+              condim="3" friction="0.9 0.02 0.001" solref="0.005 1"/>
+      </default>
+      <default class="frame">
+        <site type="sphere" size="0.008" group="4" rgba="1 0.3 0.1 0.6"/>
+      </default>
+      <default class="contact">
+        <site type="sphere" size="0.005" group="5" rgba="0.1 0.8 0.3 0.6"/>
+      </default>
+      <default class="leg_servo">
+        <joint range="-0.7853982 0.7853982" actuatorfrcrange="-23.7 23.7"/>
+        <motor ctrlrange="-23.7 23.7"/>
+      </default>
+      <default class="head_servo">
+        <joint range="-0.7853982 0.7853982" actuatorfrcrange="-7.3 7.3"/>
+        <motor ctrlrange="-7.3 7.3"/>
+      </default>
+      <default class="antenna_servo">
+        <joint range="-0.7853982 0.7853982" actuatorfrcrange="-0.2943 0.2943"/>
+        <motor ctrlrange="-0.2943 0.2943"/>
+      </default>
+    </default>
+  </default>
+
+  <asset>
+    <material name="silver" rgba="0.7 0.7 0.7 1"/>
+
+    <mesh name="pelvis" file="pelvis.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="left_foot" file="left_foot.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="left_shin" file="left_shin.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="left_thigh" file="left_thigh.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="left_hip" file="left_hip.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="left_hip_rotation" file="left_hip_rotation.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="right_foot" file="right_foot.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="right_shin" file="right_shin.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="right_thigh" file="right_thigh.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="right_hip" file="right_hip.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="right_hip_rotation" file="right_hip_rotation.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="ear_right" file="ear_right.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="ear_left" file="ear_left.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="head_body_roll" file="head_body_roll.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="head_body_yaw" file="head_body_yaw.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="head_body_pitch" file="head_body_pitch.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="neck" file="neck.stl" scale="0.001 0.001 0.001"/>
+  </asset>
+
+  <worldbody>
+    <body name="pelvis" childclass="bdx">
+      <inertial pos="-0.053755951684186565 0.0011833805784402802 0.3419474505132109" mass="5.713" fullinertia="0.201691 0.431684 0.371809 -0.002118 0.016433 -0.001502"/>
+      <freejoint name="floating_base"/>
+      <geom class="visual" mesh="pelvis"/>
+      <geom class="collision" mesh="pelvis" name="pelvis_collision"/>
+      <site name="imu" class="frame" pos="-0.035 0 0.36" rgba="0.2 0.4 1 0.6"/>
+
+      <!-- torso reference frame, root of the retargeting chain   <- smplx:pelvis -->
+      <body name="trunk" pos="-0.035 0 0.26943">
+        <site name="trunk_frame" class="frame"/>
+      </body>
+
+      <body name="left_hip_rotation" pos="-0.033111 0.046658 0.363959">
+        <inertial pos="-0.0050839710984315195 0.0030924159298773846 -0.0631042772217113" mass="0.633" fullinertia="0.005331 0.004179 0.001979 8e-06 -0.000134 9.4e-05"/>
+        <joint name="left_hip_yaw" class="leg_servo" axis="-0.0 0.0 -1.0"/>
+        <geom class="visual" mesh="left_hip_rotation" pos="0.033111 -0.046658 -0.363959"/>
+        <geom class="collision" mesh="left_hip_rotation" pos="0.033111 -0.046658 -0.363959" name="left_hip_rotation_collision"/>
+        <body name="left_hip" pos="-0.0073 0.00275 -0.076">
+          <inertial pos="0.01891117648514914 0.023471260644046747 0.00036212347671088496" mass="0.633" fullinertia="0.001496 0.000508 0.001368 -4.5e-05 -4e-06 -4e-06"/>
+          <joint name="left_hip_roll" class="leg_servo" axis="1.0 -0.0 -0.0"/>
+          <geom class="visual" mesh="left_hip" pos="0.040411 -0.049408 -0.287959"/>
+          <geom class="collision" mesh="left_hip" pos="0.040411 -0.049408 -0.287959" name="left_hip_collision"/>
+          <!-- hip pitch axis: the effective hip joint centre   <- smplx:left_hip -->
+          <body name="left_thigh" pos="0.017466 0.069601 0.000785">
+            <inertial pos="-0.03410869713640875 0.02677272953598611 -0.034446694656980914" mass="0.633" fullinertia="0.024423 0.047342 0.029001 -0.000254 -0.014456 -2.5e-05"/>
+            <joint name="left_hip_pitch" class="leg_servo" axis="0.0 1.0 0.0"/>
+            <geom class="visual" mesh="left_thigh" pos="0.022945 -0.119009 -0.288744"/>
+            <geom class="collision" mesh="left_thigh" pos="0.022945 -0.119009 -0.288744" name="left_thigh_collision"/>
+            <site name="left_hip_frame" class="frame"/>
+            <!-- <- smplx:left_knee -->
+            <body name="left_shin" pos="-0.079306 0.0 -0.077708">
+              <inertial pos="0.022294583259108075 -0.014936697575107835 -0.09005879619606566" mass="0.633" fullinertia="0.008877 0.011732 0.003534 0.000288 0.002995 -0.000503"/>
+              <joint name="left_knee" class="leg_servo" axis="-0.0 -1.0 0.0"/>
+              <geom class="visual" mesh="left_shin" pos="0.102251 -0.119009 -0.211036"/>
+              <geom class="collision" mesh="left_shin" pos="0.102251 -0.119009 -0.211036" name="left_shin_collision"/>
+              <site name="left_knee_frame" class="frame"/>
+              <!-- <- smplx:left_ankle -->
+              <body name="left_foot_link" pos="0.045 -0.0152 -0.13">
+                <inertial pos="0.03176454302608206 0.007933373772940469 -0.042151517495486915" mass="0.678" fullinertia="0.003343 0.010216 0.008414 0.000338 0.000572 -0.000559"/>
+                <joint name="left_ankle" class="leg_servo" axis="0.0 1.0 -0.0"/>
+                <geom class="visual" mesh="left_foot" pos="0.057251 -0.103809 -0.081036"/>
+                <geom class="collision" mesh="left_foot" pos="0.057251 -0.103809 -0.081036" name="left_foot_collision"/>
+                <site name="left_ankle_frame" class="frame"/>
+                <!-- sole corners: foot spans x -0.058..0.118, y -0.027..0.032, sole at z -0.081 -->
+                <site name="left_sole_toe_out" class="contact" pos="0.112 0.028 -0.0805"/>
+                <site name="left_sole_toe_in" class="contact" pos="0.112 -0.023 -0.0805"/>
+                <site name="left_sole_heel_out" class="contact" pos="-0.053 0.028 -0.0805"/>
+                <site name="left_sole_heel_in" class="contact" pos="-0.053 -0.023 -0.0805"/>
+                <!-- sole centre, target of the SMPL-X ball-of-foot joint   <- smplx:left_foot -->
+                <body name="left_foot" pos="0.025 0.0 -0.0785">
+                  <site name="left_foot_frame" class="frame"/>
+                </body>
+                <body name="left_toe" pos="0.112 0.0 -0.0785"/>
+                <body name="left_heel" pos="-0.053 0.0 -0.0785"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+
+      <body name="right_hip_rotation" pos="-0.033111 -0.046658 0.363959">
+        <inertial pos="-0.005083970545589955 -0.0030924159660494083 -0.0631042786786194" mass="0.633" fullinertia="0.005331 0.004179 0.001979 -8e-06 -0.000134 -9.4e-05"/>
+        <joint name="right_hip_yaw" class="leg_servo" axis="-0.0 -0.0 -1.0"/>
+        <geom class="visual" mesh="right_hip_rotation" pos="0.033111 0.046658 -0.363959"/>
+        <geom class="collision" mesh="right_hip_rotation" pos="0.033111 0.046658 -0.363959" name="right_hip_rotation_collision"/>
+        <body name="right_hip" pos="-0.0073 -0.00275 -0.076">
+          <inertial pos="0.01891117648514806 -0.023471260644046442 0.00036212347671088496" mass="0.633" fullinertia="0.001496 0.000508 0.001368 4.5e-05 -4e-06 4e-06"/>
+          <joint name="right_hip_roll" class="leg_servo" axis="1.0 -0.0 -0.0"/>
+          <geom class="visual" mesh="right_hip" pos="0.040411 0.049408 -0.287959"/>
+          <geom class="collision" mesh="right_hip" pos="0.040411 0.049408 -0.287959" name="right_hip_collision"/>
+          <!-- <- smplx:right_hip -->
+          <body name="right_thigh" pos="0.017466 -0.069601 0.000785">
+            <inertial pos="-0.03410869899821546 -0.026772733326120124 -0.03444669565952929" mass="0.633" fullinertia="0.024423 0.047342 0.029001 0.000254 -0.014456 2.5e-05"/>
+            <joint name="right_hip_pitch" class="leg_servo" axis="-0.0 -1.0 0.0"/>
+            <geom class="visual" mesh="right_thigh" pos="0.022945 0.119009 -0.288744"/>
+            <geom class="collision" mesh="right_thigh" pos="0.022945 0.119009 -0.288744" name="right_thigh_collision"/>
+            <site name="right_hip_frame" class="frame"/>
+            <!-- <- smplx:right_knee -->
+            <body name="right_shin" pos="-0.079306 0.0 -0.077708">
+              <inertial pos="0.022294581455755427 0.014936696596238155 -0.09005879470076929" mass="0.633" fullinertia="0.008877 0.011732 0.003534 -0.000288 0.002995 0.000503"/>
+              <joint name="right_knee" class="leg_servo" axis="0.0 1.0 -0.0"/>
+              <geom class="visual" mesh="right_shin" pos="0.102251 0.119009 -0.211036"/>
+              <geom class="collision" mesh="right_shin" pos="0.102251 0.119009 -0.211036" name="right_shin_collision"/>
+              <site name="right_knee_frame" class="frame"/>
+              <!-- <- smplx:right_ankle -->
+              <body name="right_foot_link" pos="0.045 0.0152 -0.13">
+                <inertial pos="0.03176454302608035 -0.00793337377294008 -0.042151517495486845" mass="0.678" fullinertia="0.003343 0.010216 0.008414 -0.000338 0.000572 0.000559"/>
+                <joint name="right_ankle" class="leg_servo" axis="-0.0 -1.0 0.0"/>
+                <geom class="visual" mesh="right_foot" pos="0.057251 0.103809 -0.081036"/>
+                <geom class="collision" mesh="right_foot" pos="0.057251 0.103809 -0.081036" name="right_foot_collision"/>
+                <site name="right_ankle_frame" class="frame"/>
+                <site name="right_sole_toe_out" class="contact" pos="0.112 -0.028 -0.0805"/>
+                <site name="right_sole_toe_in" class="contact" pos="0.112 0.023 -0.0805"/>
+                <site name="right_sole_heel_out" class="contact" pos="-0.053 -0.028 -0.0805"/>
+                <site name="right_sole_heel_in" class="contact" pos="-0.053 0.023 -0.0805"/>
+                <!-- <- smplx:right_foot -->
+                <body name="right_foot" pos="0.025 0.0 -0.0785">
+                  <site name="right_foot_frame" class="frame"/>
+                </body>
+                <body name="right_toe" pos="0.112 0.0 -0.0785"/>
+                <body name="right_heel" pos="-0.053 0.0 -0.0785"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+
+      <!-- <- smplx:neck -->
+      <body name="neck" pos="0.056339 0.0119 0.395171">
+        <inertial pos="-0.024004254429775385 -0.016411240253498143 0.050435044753794234" mass="0.633" fullinertia="0.005277 0.006434 0.00225 0.000151 0.00222 -0.00041"/>
+        <joint name="neck_pitch" class="head_servo" axis="-0.0 -1.0 0.0"/>
+        <geom class="visual" mesh="neck" pos="-0.056339 -0.0119 -0.395171"/>
+        <geom class="collision" mesh="neck" pos="-0.056339 -0.0119 -0.395171" name="neck_collision"/>
+        <site name="neck_frame" class="frame"/>
+        <body name="head_body_pitch" pos="-0.065022 -0.01175 0.11088">
+          <inertial pos="-0.012968234611992 -0.0017146542693841447 0.02775588249672334" mass="0.2" fullinertia="0.000368 0.000336 0.000202 1.6e-05 8.6e-05 -2.7e-05"/>
+          <joint name="head_pitch" class="head_servo" axis="-0.0 -1.0 0.0"/>
+          <geom class="visual" mesh="head_body_pitch" pos="0.008683 -0.00015 -0.506051"/>
+          <geom class="collision" mesh="head_body_pitch" pos="0.008683 -0.00015 -0.506051" name="head_body_pitch_collision"/>
+          <body name="head_body_yaw" pos="0.000299 0.0007 0.02897">
+            <inertial pos="0.007854612556277348 -1.4610759692288647e-06 0.022545092583183712" mass="0.2" fullinertia="0.000226 0.000559 0.00054 -0.0 -5.7e-05 -0.0"/>
+            <joint name="head_yaw" class="head_servo" axis="-0.0 -0.0 1.0"/>
+            <geom class="visual" mesh="head_body_yaw" pos="0.008384 -0.00085 -0.535021"/>
+            <geom class="collision" mesh="head_body_yaw" pos="0.008384 -0.00085 -0.535021" name="head_body_yaw_collision"/>
+            <body name="head_body_roll" pos="0.039892 0.0 0.02715">
+              <inertial pos="-0.033968727756986235 0.0014876580341947271 0.002427645109891574" mass="0.4" fullinertia="0.041565 0.047007 0.080654 -0.001049 -0.001655 -0.000217"/>
+              <joint name="head_roll" class="head_servo" axis="1.0 -0.0 0.0"/>
+              <geom class="visual" mesh="head_body_roll" pos="-0.031508 -0.00085 -0.562171"/>
+              <geom class="collision" mesh="head_body_roll" pos="-0.031508 -0.00085 -0.562171" name="head_body_roll_collision"/>
+              <body name="ear_left" pos="-0.16665 0.0683 0.001231">
+                <inertial pos="0.00016156466276556758 0.02472912163478709 0.016144998004147926" mass="0.0964016" fullinertia="0.000207 0.0002 2.1e-05 -0.0 -1.4e-05 -9e-06"/>
+                <joint name="left_antenna" class="antenna_servo" axis="-0.0 -1.0 -0.0"/>
+                <geom class="visual" mesh="ear_left" pos="0.135142 -0.06915 -0.563402"/>
+                <geom class="collision" mesh="ear_left" pos="0.135142 -0.06915 -0.563402" name="ear_left_collision"/>
+              </body>
+              <body name="ear_right" pos="-0.16665 -0.0697 0.001231">
+                <inertial pos="0.0001615646627644296 -0.024729110791009132 0.016144998004147593" mass="0.0964016" fullinertia="0.000207 0.0002 2.1e-05 0.0 -1.4e-05 9e-06"/>
+                <joint name="right_antenna" class="antenna_servo" axis="-0.0 -1.0 -0.0"/>
+                <geom class="visual" mesh="ear_right" pos="0.135142 0.06885 -0.563402"/>
+                <geom class="collision" mesh="ear_right" pos="0.135142 0.06885 -0.563402" name="ear_right_collision"/>
+              </body>
+              <!-- head reference frame   <- smplx:head -->
+              <body name="head" pos="-0.03 0 0.05">
+                <site name="head_frame" class="frame"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <motor class="leg_servo" name="left_hip_yaw" joint="left_hip_yaw"/>
+    <motor class="leg_servo" name="left_hip_roll" joint="left_hip_roll"/>
+    <motor class="leg_servo" name="left_hip_pitch" joint="left_hip_pitch"/>
+    <motor class="leg_servo" name="left_knee" joint="left_knee"/>
+    <motor class="leg_servo" name="left_ankle" joint="left_ankle"/>
+    <motor class="leg_servo" name="right_hip_yaw" joint="right_hip_yaw"/>
+    <motor class="leg_servo" name="right_hip_roll" joint="right_hip_roll"/>
+    <motor class="leg_servo" name="right_hip_pitch" joint="right_hip_pitch"/>
+    <motor class="leg_servo" name="right_knee" joint="right_knee"/>
+    <motor class="leg_servo" name="right_ankle" joint="right_ankle"/>
+    <motor class="head_servo" name="neck_pitch" joint="neck_pitch"/>
+    <motor class="head_servo" name="head_pitch" joint="head_pitch"/>
+    <motor class="head_servo" name="head_yaw" joint="head_yaw"/>
+    <motor class="head_servo" name="head_roll" joint="head_roll"/>
+    <motor class="antenna_servo" name="left_antenna" joint="left_antenna"/>
+    <motor class="antenna_servo" name="right_antenna" joint="right_antenna"/>
+  </actuator>
+
+  <sensor>
+    <framequat name="orientation" objtype="site" objname="imu"/>
+    <framepos name="position" objtype="site" objname="imu"/>
+    <gyro name="angular-velocity" site="imu"/>
+    <accelerometer name="linear-acceleration" site="imu"/>
+  </sensor>
+
+  <keyframe>
+    <!-- rest pose: qpos = 0 already puts both soles on z = 0 -->
+    <key name="home" qpos="0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
+  </keyframe>
+
+  <!-- scene -->
+  <statistic center="-0.04 0 0.36" extent="0.8"/>
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.1 0.1 0.1" specular="0.9 0.9 0.9"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="-140" elevation="-20" offwidth="2080" offheight="1170"/>
+  </visual>
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="1 1 1" width="800" height="800"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="1 1 1" rgb2="1 1 1"
+             markrgb="0 0 0" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0"/>
+  </asset>
+  <worldbody>
+    <geom name="floor" size="0 0 0.01" type="plane" material="groundplane"
+          contype="0" conaffinity="1" priority="1" friction="0.9" condim="3"/>
+    <light diffuse=".5 .5 .5" pos="-3 -3 5" dir="3 3 -5" castshadow="true"/>
+  </worldbody>
+</mujoco>
