@@ -92,16 +92,16 @@ kimodo_demo
 ### 2. Retarget motion data
 
 ```bash
-python scripts\smplx_to_robot.py --smplx_file motion_data\stand_amass.npz --robot bdx --save_path outputs\bdx_stand.pkl --rate_limit
+python scripts\smplx_to_robot.py --smplx_file motion_data\stand_amass.npz --robot unitree_h1 --save_path outputs\h1_stand.pkl --rate_limit
 ```
 
 ### 3. Visualize motion data
 
 ```bash
-python scripts\vis_robot_motion.py --robot bdx --robot_motion_path outputs\bdx_stand.pkl
+python scripts\vis_robot_motion.py --robot unitree_h1 --robot_motion_path outputs\h1_stand.pkl
 ```
 
-`--robot` is `bdx` (default) or `unitree_h1`.
+`--robot` is `unitree_h1` or `bdx`. For BDX, use `--robot bdx` (e.g. `--save_path outputs\bdx_stand.pkl`).
 
 ## Adding a robot
 
