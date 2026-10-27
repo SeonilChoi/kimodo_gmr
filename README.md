@@ -2,7 +2,7 @@
 
 Text → human motion (Kimodo, SMPL-X) → humanoid robot motion (GMR).
 
-> `develop`: only the generate (+ `kimodo_demo` SMPL-X viewer) → retarget → visualize pipeline (robots: `unitree_h1`, `bdx`).
+> `develop`: only the generate (+ `kimodo_demo` SMPL-X viewer) → retarget → visualize pipeline (robots: `unitree_g1`, `bdx`).
 > `main`: every original Kimodo / GMR feature (other robots, BVH/FBX/OptiTrack inputs, demo UI, ...).
 
 ## Layout
@@ -18,7 +18,7 @@ scripts/
   smplx_to_robot.py          Retarget SMPL-X motion to a robot (.pkl)
   vis_robot_motion.py        Play a retargeted robot motion
 assets/
-  unitree_h1/, bdx/          Robot MuJoCo models
+  unitree_g1/, bdx/          Robot MuJoCo models
   body_models/smplx/         SMPL-X body models (not tracked, download separately)
 motion_data/, outputs/       Generated data (not tracked)
 licenses/                    Kimodo (Apache-2.0) and GMR (MIT) licenses
@@ -92,16 +92,16 @@ kimodo_demo
 ### 2. Retarget motion data
 
 ```bash
-python scripts\smplx_to_robot.py --smplx_file motion_data\stand_amass.npz --robot unitree_h1 --save_path outputs\h1_stand.pkl --rate_limit
+python scripts\smplx_to_robot.py --smplx_file motion_data\stand_amass.npz --robot unitree_g1 --save_path outputs\g1_stand.pkl --rate_limit
 ```
 
 ### 3. Visualize motion data
 
 ```bash
-python scripts\vis_robot_motion.py --robot unitree_h1 --robot_motion_path outputs\h1_stand.pkl
+python scripts\vis_robot_motion.py --robot unitree_g1 --robot_motion_path outputs\g1_stand.pkl
 ```
 
-`--robot` is `unitree_h1` or `bdx`. For BDX, use `--robot bdx` (e.g. `--save_path outputs\bdx_stand.pkl`).
+`--robot` is `unitree_g1` or `bdx`. For BDX, use `--robot bdx` (e.g. `--save_path outputs\bdx_stand.pkl`).
 
 ## Adding a robot
 
