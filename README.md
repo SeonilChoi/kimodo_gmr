@@ -2,13 +2,14 @@
 
 Text → human motion (Kimodo, SMPL-X) → humanoid robot motion (GMR).
 
-> `develop`: only the generate → retarget → visualize pipeline (robots: `unitree_h1`, `bdx`).
+> `develop`: only the generate (+ `kimodo_demo` SMPL-X viewer) → retarget → visualize pipeline (robots: `unitree_h1`, `bdx`).
 > `main`: every original Kimodo / GMR feature (other robots, BVH/FBX/OptiTrack inputs, demo UI, ...).
 
 ## Layout
 
 ```
 kimodo/                      Kimodo package (text-to-motion, SMPL-X output)
+  demo/, viz/                kimodo_demo web UI (SMPL-X motion viewer)
 MotionCorrection/            Kimodo foot-skate post-processing extension (motion_correction)
 general_motion_retargeting/  GMR package
   params.py                  Robot registry (model XML, IK config, base body, camera distance)
@@ -27,8 +28,11 @@ licenses/                    Kimodo (Apache-2.0) and GMR (MIT) licenses
 
 ```bash
 conda activate env_kimodo
+cd C:\kimodo
 pip install -e .
 ```
+
+Every command below assumes `conda activate env_kimodo` and the `C:\kimodo` working directory.
 
 `MotionCorrection` is built with CMake on install. If a prebuilt
 `MotionCorrection/python/motion_correction/_motion_correction*.pyd` already exists, it is reused and no build runs.
@@ -45,6 +49,26 @@ Writes `motion_data\stand.npz` and `motion_data\stand_amass.npz`. The `_amass.np
 The model defaults to `Kimodo-SMPLX-RP-v1`.
 
 Tip: run `kimodo_textencoder` in a separate terminal to keep the text encoder loaded between `kimodo_gen` runs.
+
+### 1-1. (Optional) View the motion on the SMPL-X body (kimodo_demo)
+
+```bash
+conda activate env_kimodo
+cd C:\kimodo
+kimodo_demo
+```
+
+1. Open http://127.0.0.1:7860 in a browser. The `Kimodo-SMPLX-RP-v1` model loads by default
+   (`--model` picks another one). The first launch takes a while because the model and text encoder load.
+2. Open **Load/Save → Motion** in the left panel.
+3. Set **Load Path** to the motion file, e.g. `C:\kimodo\motion_data\stand.npz`
+   (Kimodo `.npz` or AMASS `_amass.npz` both work), then click **Load Motion**.
+4. Use the timeline at the bottom to play or scrub the motion.
+
+- The SMPL-X mesh uses `assets/body_models/smplx/SMPLX_NEUTRAL.npz` (the same file GMR uses).
+- Only motions whose skeleton matches the loaded model can be loaded, so keep the SMPLX model selected.
+- You can also type a prompt in **Generate** to create, preview and save motions directly from the UI.
+- Change the port with the `SERVER_PORT` environment variable (`set SERVER_PORT=7861`).
 
 ### 2. Retarget motion data
 

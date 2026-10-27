@@ -27,6 +27,10 @@ dependencies = [
   "gradio>=6.8.0",
   "gradio_client>=1.0",
   "bvhio",
+  # kimodo_demo
+  "trimesh>=3.21.7",
+  "viser @ git+https://github.com/nv-tlabs/kimodo-viser.git",
+  "py-soma-x @ git+https://github.com/NVlabs/SOMA-X.git",
   # general_motion_retargeting
   "loop_rate_limiters",
   "mink",
@@ -39,6 +43,7 @@ dependencies = [
 
 [project.scripts]
 kimodo_gen = "kimodo.scripts.generate:main"
+kimodo_demo = "kimodo.demo:main"
 kimodo_textencoder = "kimodo.scripts.run_text_encoder_server:main"
 
 [tool.setuptools]
